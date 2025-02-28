@@ -1,0 +1,47 @@
+{
+  "project_info": {
+    "project_number": "129889436687",
+    "project_id": "ekatta-trakers",
+    "storage_bucket": "ekatta-trakers.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:129889436687:android:97e1eaa39ce2bae38c0f7a",
+        "android_client_info": {
+          "package_name": "com.pratik.ekattatrackers"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "129889436687-9aqq9ivi8c76j1qi7bi806fqfngcuai2.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.pratik.ekattatrackers",
+            "certificate_hash": "e9b93c1289685a4d963a3b1b4af104fd58c74ad9"
+          }
+        },
+        {
+          "client_id": "129889436687-qu4oa6or6bcmcdp20is54s1bkm811rbf.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDj7JbDRl5_Yx-pzRGg6cmMmH9anyMeeOU"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "129889436687-qu4oa6or6bcmcdp20is54s1bkm811rbf.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
