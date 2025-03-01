@@ -52,15 +52,30 @@ dependencies {
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
 
+    //for importing ui components
     implementation(libs.play.services.base)
 
+    //google auth credentials
     implementation(libs.androidx.credentials)
     implementation(libs.androidx.credentials.play.services.auth)
     implementation(libs.googleid)
 
+    //firebase auth and bom
     implementation(platform(libs.firebase.bom))
     implementation(libs.firebase.auth.ktx)
 
-    implementation ("com.google.android.gms:play-services-location:21.3.0")
-    implementation ("com.google.firebase:firebase-database:21.0.0")
+    //firebase realtime db and location provider
+    implementation("com.google.android.gms:play-services-location:21.3.0")
+    implementation("com.google.firebase:firebase-database:21.0.0")
+
+    //Responsive design size provider
+    implementation("com.intuit.sdp:sdp-android:1.1.1")
+    implementation("com.intuit.ssp:ssp-android:1.1.1")
+
+    //facebook shimmer
+    implementation("com.facebook.shimmer:shimmer:0.5.0")
+
+    implementation ("com.airbnb.android:lottie:6.1.0")
+
+
 }

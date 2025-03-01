@@ -1,22 +1,53 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout
-    xmlns:android="http://schemas.android.com/apk/res/android"
+<androidx.cardview.widget.CardView xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:orientation="vertical"
-    android:padding="10dp">
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:backgroundTint="@color/white"
+    android:layout_margin="@dimen/_6sdp"
+    app:cardCornerRadius="@dimen/_10sdp"
+    app:cardElevation="@dimen/_3sdp">
 
-    <TextView
-        android:id="@+id/tvLatitude"
-        android:layout_width="wrap_content"
+    <LinearLayout
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="Latitude: 0.0"
-        android:textSize="16sp"/>
+        android:orientation="vertical"
+        android:padding="@dimen/_10sdp">
 
-    <TextView
-        android:id="@+id/tvLongitude"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="Longitude: 0.0"
-        android:textSize="16sp"/>
-</LinearLayout>
+        <RelativeLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content">
+
+            <TextView
+                android:id="@+id/tvTime"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="12:30 PM"
+                android:textSize="@dimen/_12ssp"
+                android:textColor="@android:color/darker_gray"
+                android:layout_alignParentEnd="true"
+                android:layout_marginEnd="@dimen/_6sdp"/>
+
+        </RelativeLayout>
+
+        <TextView
+            android:id="@+id/tvLatitude"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Latitude: 0.0"
+            android:textSize="@dimen/_14sdp"
+            android:textColor="@android:color/black"
+            android:layout_marginTop="@dimen/_3sdp"/>
+
+        <TextView
+            android:id="@+id/tvLongitude"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Longitude: 0.0"
+            android:textSize="@dimen/_14sdp"
+            android:textColor="@android:color/black"
+            android:layout_marginTop="@dimen/_1sdp"/>
+
+    </LinearLayout>
+
+</androidx.cardview.widget.CardView>

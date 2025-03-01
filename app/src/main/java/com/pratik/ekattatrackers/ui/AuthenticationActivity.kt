@@ -7,21 +7,22 @@ import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.lifecycleScope
 import com.pratik.ekattatrackers.GoogleAuthClient
-import com.pratik.ekattatrackers.databinding.ActivityLoginBinding
+import com.pratik.ekattatrackers.databinding.ActivityAuthenticationBinding
 import kotlinx.coroutines.launch
 
 class AuthenticationActivity : AppCompatActivity() {
 
     private lateinit var googleAuthClient: GoogleAuthClient
-    private lateinit var binding: ActivityLoginBinding
+    private lateinit var binding: ActivityAuthenticationBinding
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
-        binding = ActivityLoginBinding.inflate(layoutInflater)
+        binding = ActivityAuthenticationBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
         googleAuthClient = GoogleAuthClient(this)
+        binding.animationView.playAnimation()
 
         // If the user is already signed in, go to HomeActivity
         if (googleAuthClient.isSingedIn()) {

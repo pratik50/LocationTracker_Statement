@@ -1,88 +1,135 @@
 package com.pratik.ekattatrackers.ui
 
-import android.content.Context
-import android.content.Intent
 import android.content.pm.PackageManager
-import android.location.Location
-import android.location.LocationManager
 import android.os.Bundle
-import android.provider.Settings
+import android.view.Menu
+import android.view.MenuItem
+import android.view.View
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
-import androidx.core.app.ActivityCompat
+import androidx.lifecycle.lifecycleScope
+import androidx.recyclerview.widget.LinearLayoutManager
+import com.facebook.shimmer.ShimmerFrameLayout
 import com.google.android.gms.location.FusedLocationProviderClient
 import com.google.android.gms.location.LocationServices
+import com.google.firebase.FirebaseApp
+import com.google.firebase.database.FirebaseDatabase
+import com.pratik.ekattatrackers.FirebaseHelper
+import com.pratik.ekattatrackers.GoogleAuthClient
+import com.pratik.ekattatrackers.LocationHelper
+import com.pratik.ekattatrackers.NotificationHelper
+import com.pratik.ekattatrackers.R
+import com.pratik.ekattatrackers.adapter.LocationAdapter
+import com.pratik.ekattatrackers.dataModel.LocationModel
 import com.pratik.ekattatrackers.databinding.ActivityMainBinding
+import kotlinx.coroutines.launch
 
 class MainActivity : AppCompatActivity() {
 
     private lateinit var binding: ActivityMainBinding
     private lateinit var fusedLocationProviderClient: FusedLocationProviderClient
+    private lateinit var locationAdapter: LocationAdapter
+    private val locationList = mutableListOf<LocationModel>()
+    private lateinit var googleAuthClient: GoogleAuthClient
+    private lateinit var firebaseHelper: FirebaseHelper
+    private lateinit var notificationHelper: NotificationHelper
+    private lateinit var locationHelper: LocationHelper
+    private lateinit var shimmerLayout: ShimmerFrameLayout
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
+        shimmerLayout = binding.shimmerLayout
+
+        setSupportActionBar(binding.toolbar)
+        FirebaseApp.initializeApp(this)
+
+        googleAuthClient = GoogleAuthClient(this)
         fusedLocationProviderClient = LocationServices.getFusedLocationProviderClient(this)
+        val locationRef = FirebaseDatabase.getInstance().getReference("locations")
 
-        getCurrentLocation();
+        notificationHelper = NotificationHelper(this)
+        firebaseHelper = FirebaseHelper(this, locationRef)
+        locationHelper = LocationHelper(this, fusedLocationProviderClient)
+
+        locationAdapter = LocationAdapter(locationList)
+        binding.recyclerView.layoutManager = LinearLayoutManager(this)
+        binding.recyclerView.adapter = locationAdapter
+
+        // Set up location updates listener
+        locationHelper.onLocationUpdated = { location ->
+            val latitude = location.latitude
+            val longitude = location.longitude
+
+            val locationModel = LocationModel(latitude, longitude)
+            locationList.add(0, locationModel)
+            locationAdapter.notifyItemInserted(0)
+            binding.recyclerView.scrollToPosition(0)
+
+            firebaseHelper.storeLocationInFirebase(locationModel)
+            notificationHelper.showLocationNotification(latitude, longitude)
+        }
+
+        fetchPreviousLocations()
+        getCurrentLocation()
     }
 
-    private fun getCurrentLocation() {
+    //fn to retrieve firebase data
+    private fun fetchPreviousLocations() {
 
-        if (checkPermission()){
+        shimmerLayout.visibility = View.VISIBLE
+        shimmerLayout.startShimmer()
 
-            if(isLocationEnabled()){
-                fusedLocationProviderClient.lastLocation.addOnCompleteListener(this){ it ->
-                    val location: Location?=it.result
+        binding.recyclerView.visibility = View.GONE
 
-                    if(location == null){
-                        Toast.makeText(this,"null Recieved", Toast.LENGTH_LONG).show()
-                    }
-                    else{
-                        Toast.makeText(this,"Location Recieved", Toast.LENGTH_LONG).show()
+        firebaseHelper.fetchPreviousLocations(
+            onSuccess = { locations ->
+                locationList.clear()
+                locationList.addAll(locations)
+                locationAdapter.notifyDataSetChanged()
 
-                        binding.latitude.text = location.latitude.toString()
-                        binding.longitude.text = location.longitude.toString()
-                    }
-                }
+                shimmerLayout.visibility = View.GONE
+                binding.recyclerView.visibility = View.VISIBLE
+            },
+            onFailure = { exception ->
+                Toast.makeText(this, "Failed to fetch locations: ${exception.message}", Toast.LENGTH_SHORT).show()
             }
-            else{
-                Toast.makeText(this, "Turn on location", Toast.LENGTH_SHORT).show()
-                val intent = Intent(Settings.ACTION_LOCATION_SOURCE_SETTINGS)
-                startActivity(intent)
-            }
-        }
-        else{
-
-            requestPermission()
-        }
-    }
-
-    private fun requestPermission() {
-
-        ActivityCompat.requestPermissions(this, arrayOf(android.Manifest.permission.ACCESS_FINE_LOCATION,
-            android.Manifest.permission.ACCESS_COARSE_LOCATION),
-            Permission_Request_Access_Location
         )
     }
 
-    private fun checkPermission(): Boolean {
-
-        if(ActivityCompat.checkSelfPermission(this,android.Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED
-            && ActivityCompat.checkSelfPermission(this, android.Manifest.permission.ACCESS_COARSE_LOCATION) == PackageManager.PERMISSION_GRANTED)
-        {
-            return true
+    //When app will be in Resume State
+    override fun onResume() {
+        super.onResume()
+        if (locationHelper.checkPermission()) {
+            if (locationHelper.checkLocationEnabled()) {
+                // if enabled, fetch location
+                getCurrentLocation()
+            } else {
+                // else show the dialog again
+                locationHelper.showLocationEnableDialog()
+            }
         }
-        return false
     }
 
-    private fun isLocationEnabled(): Boolean{
-        val locationManager: LocationManager = getSystemService(Context.LOCATION_SERVICE) as LocationManager
-        return locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER) || locationManager.isProviderEnabled(LocationManager.NETWORK_PROVIDER)
+    override fun onPause() {
+        super.onPause()
+        locationHelper.stopPeriodicLocationUpdates()
     }
 
+    //main fn call
+    private fun getCurrentLocation() {
+        if (locationHelper.checkPermission()) {
+            if (locationHelper.checkLocationEnabled()) {
+                locationHelper.startPeriodicLocationUpdates()
+            }
+        } else {
+            locationHelper.requestPermission()
+        }
+    }
+
+    //Location permission handler
     override fun onRequestPermissionsResult(
         requestCode: Int,
         permissions: Array<out String>,
@@ -90,20 +137,36 @@ class MainActivity : AppCompatActivity() {
     ) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults)
 
-        if(requestCode == Permission_Request_Access_Location){
-            if (grantResults.isNotEmpty() && grantResults[0] == PackageManager.PERMISSION_GRANTED)
-            {
+        if (requestCode == PERMISSION_REQUEST_ACCESS_LOCATION) {
+            if (grantResults.isNotEmpty() && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
                 Toast.makeText(this, "Permission Granted", Toast.LENGTH_SHORT).show()
                 getCurrentLocation()
-
-            }
-            else{
-                Toast.makeText(this, "Permission Denied", Toast.LENGTH_SHORT).show()
+            } else {
+                Toast.makeText(this, "Allow Permission to use this app", Toast.LENGTH_LONG).show()
+                finish()
             }
         }
     }
 
-    companion object{
-        const val Permission_Request_Access_Location = 100
+    companion object {
+        const val PERMISSION_REQUEST_ACCESS_LOCATION = 100
+    }
+
+    //Toolbar menu handler
+    override fun onCreateOptionsMenu(menu: Menu?): Boolean {
+        menuInflater.inflate(R.menu.menu_main,menu)
+        return true
+    }
+
+    override fun onOptionsItemSelected(item: MenuItem): Boolean {
+        return when (item.itemId) {
+            R.id.action_logout -> {
+                lifecycleScope.launch {
+                    googleAuthClient.signOut()
+                }
+                true
+            }
+            else -> super.onOptionsItemSelected(item)
+        }
     }
 }
