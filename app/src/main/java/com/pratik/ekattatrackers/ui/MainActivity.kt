@@ -13,6 +13,7 @@ import com.facebook.shimmer.ShimmerFrameLayout
 import com.google.android.gms.location.FusedLocationProviderClient
 import com.google.android.gms.location.LocationServices
 import com.google.firebase.FirebaseApp
+import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.database.FirebaseDatabase
 import com.pratik.ekattatrackers.FirebaseHelper
 import com.pratik.ekattatrackers.GoogleAuthClient
@@ -46,12 +47,15 @@ class MainActivity : AppCompatActivity() {
         setSupportActionBar(binding.toolbar)
         FirebaseApp.initializeApp(this)
 
+        // Get the current user's UID from Firebase Authentication
+        val user = FirebaseAuth.getInstance().currentUser
+        val uid = user?.uid ?: throw IllegalStateException("User not logged in")
+
         googleAuthClient = GoogleAuthClient(this)
         fusedLocationProviderClient = LocationServices.getFusedLocationProviderClient(this)
-        val locationRef = FirebaseDatabase.getInstance().getReference("locations")
 
         notificationHelper = NotificationHelper(this)
-        firebaseHelper = FirebaseHelper(this, locationRef)
+        firebaseHelper = FirebaseHelper(this, uid)
         locationHelper = LocationHelper(this, fusedLocationProviderClient)
 
         locationAdapter = LocationAdapter(locationList)
@@ -69,6 +73,7 @@ class MainActivity : AppCompatActivity() {
             binding.recyclerView.scrollToPosition(0)
 
             firebaseHelper.storeLocationInFirebase(locationModel)
+            fetchPreviousLocations()
             notificationHelper.showLocationNotification(latitude, longitude)
         }
 
@@ -78,23 +83,42 @@ class MainActivity : AppCompatActivity() {
 
     //fn to retrieve firebase data
     private fun fetchPreviousLocations() {
-
+        // Show shimmer effect
         shimmerLayout.visibility = View.VISIBLE
         shimmerLayout.startShimmer()
 
         binding.recyclerView.visibility = View.GONE
+        binding.noDataText.visibility = View.GONE
 
         firebaseHelper.fetchPreviousLocations(
             onSuccess = { locations ->
-                locationList.clear()
-                locationList.addAll(locations)
-                locationAdapter.notifyDataSetChanged()
 
+                shimmerLayout.stopShimmer()
                 shimmerLayout.visibility = View.GONE
-                binding.recyclerView.visibility = View.VISIBLE
+
+                if (locations.isEmpty()) {
+
+                    binding.noDataText.visibility = View.VISIBLE
+                    binding.recyclerView.visibility = View.GONE
+                } else {
+
+                    locationList.clear()
+                    locationList.addAll(locations)
+                    locationAdapter.notifyDataSetChanged()
+
+                    binding.recyclerView.visibility = View.VISIBLE
+                    binding.noDataText.visibility = View.GONE
+                }
             },
             onFailure = { exception ->
+
+                shimmerLayout.stopShimmer()
+                shimmerLayout.visibility = View.GONE
+
                 Toast.makeText(this, "Failed to fetch locations: ${exception.message}", Toast.LENGTH_SHORT).show()
+
+                binding.noDataText.visibility = View.VISIBLE
+                binding.recyclerView.visibility = View.GONE
             }
         )
     }

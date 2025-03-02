@@ -21,13 +21,14 @@ import com.google.android.gms.location.LocationCallback
 import com.google.android.gms.location.LocationRequest
 import com.google.android.gms.location.LocationResult
 import com.google.android.material.bottomsheet.BottomSheetDialog
+import com.pratik.ekattatrackers.ui.MainActivity
 import com.pratik.ekattatrackers.ui.MainActivity.Companion.PERMISSION_REQUEST_ACCESS_LOCATION
 
 class LocationHelper(   private val context: Context,
                         private val fusedLocationProviderClient: FusedLocationProviderClient
 ) {
 
-    private val locationUpdateInterval = 5 * 60 * 1000L
+    private val locationUpdateInterval = 20 * 1000L
     private val handler = Handler(Looper.getMainLooper())
     private val dialog: BottomSheetDialog = BottomSheetDialog(context)
     private val view = LayoutInflater.from(context).inflate(R.layout.bottom_sheet_loader, null)
